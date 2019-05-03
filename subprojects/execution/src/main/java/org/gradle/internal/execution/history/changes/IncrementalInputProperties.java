@@ -23,8 +23,14 @@ import org.gradle.internal.fingerprint.FileCollectionFingerprint;
 
 public interface IncrementalInputProperties {
     String getPropertyNameFor(Object value);
-    InputFileChanges nonIncrementalChanges(ImmutableSortedMap<String, FileCollectionFingerprint> previous, ImmutableSortedMap<String, CurrentFileCollectionFingerprint> current);
-    InputFileChanges incrementalChanges(ImmutableSortedMap<String, FileCollectionFingerprint> previous, ImmutableSortedMap<String, CurrentFileCollectionFingerprint> current);
+    InputFileChanges nonIncrementalChanges(
+        ImmutableSortedMap<String, FileCollectionFingerprint> previous,
+        ImmutableSortedMap<String, CurrentFileCollectionFingerprint> current
+    );
+    InputFileChanges incrementalChanges(
+        ImmutableSortedMap<String, FileCollectionFingerprint> previous,
+        ImmutableSortedMap<String, CurrentFileCollectionFingerprint> current
+    );
 
     IncrementalInputProperties NONE = new IncrementalInputProperties() {
         @Override

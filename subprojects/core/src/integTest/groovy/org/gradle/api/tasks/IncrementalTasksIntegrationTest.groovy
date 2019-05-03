@@ -148,4 +148,39 @@ class IncrementalTasksIntegrationTest extends AbstractIntegrationSpec {
         then:
         output.contains "Input property 'inputFiles' file ${inputA.absolutePath} has changed."
     }
+
+    def "incremental task with NAME_ONLY detects correct deleted file"() {
+        def inputA = file("input/a/foo.txt")
+        def inputB = file("input/b/foo.txt")
+        def inputC = file("input/c/foo.txt")
+
+        inputA.text = ""
+        inputB.text = ""
+        inputC.text = ""
+
+        buildFile << """
+            class IncrementalTask extends DefaultTask {
+                @InputFiles
+                @PathSensitive(PathSensitivity.NAME_ONLY)
+                FileCollection inputFiles = project.files('input/a/foo.txt', 'input/b/foo.txt', 'input/c/foo.txt')
+            
+                @TaskAction
+                def taskAction(IncrementalTaskInputs inputs) {
+                    println 'outOfDate:'
+                    inputs.outOfDate { println "\${it.file} - \${it.file.exists()}" }
+                }
+            }
+            
+            task incrementalTask(type: IncrementalTask) {}
+        """
+
+        run "incrementalTask"
+
+        when:
+        inputB.delete()
+        inputC.delete()
+        run "incrementalTask", "--info"
+        then:
+        output.contains "Input property 'inputFiles' file ${inputA.absolutePath} has changed."
+    }
 }
