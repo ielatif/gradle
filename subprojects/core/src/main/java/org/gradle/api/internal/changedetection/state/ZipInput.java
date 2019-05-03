@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,23 @@
 
 package org.gradle.api.internal.changedetection.state;
 
-import org.gradle.internal.hash.HashCode;
-
 import javax.annotation.Nullable;
+import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
-/**
- * Hashes resources (e.g., a class file in a jar or a class file in a directory)
- */
-public interface ResourceHasher extends ConfigurableNormalizer, RegularFileHasher {
-    /**
-     * Returns {@code null} if the zip entry should be ignored.
-     */
+public abstract class ZipInput implements Closeable {
+
+    static ZipInput create(InputStream in) {
+        return new StreamZipInput(in);
+    }
+
+    static ZipInput create(File zipFile) throws IOException {
+        return new FileZipInput(zipFile);
+    }
+
     @Nullable
-    HashCode hash(ZipEntry zipEntry) throws IOException;
+    abstract ZipEntry getNextEntry() throws IOException;
+
 }
