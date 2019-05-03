@@ -17,9 +17,10 @@
 package org.gradle.api.tasks
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import spock.lang.Issue
 import spock.lang.Unroll
 
-class FailingIncrementalTasksIntegrationTest extends AbstractIntegrationSpec {
+class IncrementalTasksIntegrationTest extends AbstractIntegrationSpec {
 
     def "consecutively failing task has correct up-to-date status and failure"() {
         buildFile << """
@@ -107,5 +108,44 @@ class FailingIncrementalTasksIntegrationTest extends AbstractIntegrationSpec {
         "change"      | false       | "with changed outputs is fully rebuilt"
         "remove"      | false       | "with removed outputs is fully rebuilt"
         "none"        | true        | "with unmodified outputs is executed as incremental"
+    }
+
+    @Issue("https://github.com/gradle/gradle/issues/9320")
+    def "incremental task with NAME_ONLY input detects correct input change"() {
+        def inputA = file("input/a/foo.txt")
+        def inputB = file("input/b/foo.txt")
+
+        inputA.text = ""
+        inputB.text = ""
+
+        buildFile << """
+            class IncrementalTask extends DefaultTask {
+                @InputFiles
+                @PathSensitive(PathSensitivity.NAME_ONLY)
+                FileCollection inputFiles = project.files('input/a/foo.txt', 'input/b/foo.txt')
+            
+                @TaskAction
+                def taskAction(IncrementalTaskInputs inputs) {
+                    println 'outOfDate:'
+                    inputs.outOfDate { println "\${it.file} - \${it.file.exists()}" }
+                }
+            }
+            
+            task incrementalTask(type: IncrementalTask) {}
+        """
+
+        run "incrementalTask"
+
+        when:
+        inputA.text = "changed"
+        run "incrementalTask", "--info"
+        then:
+        output.contains "Input property 'inputFiles' file ${inputA.absolutePath} has changed."
+
+        when:
+        inputA.text = ""
+        run "incrementalTask", "--info"
+        then:
+        output.contains "Input property 'inputFiles' file ${inputA.absolutePath} has changed."
     }
 }
