@@ -36,17 +36,7 @@ import java.io.File;
  * @since 4.3
  */
 @Incubating
-public interface RegularFileProperty extends Property<RegularFile> {
-    /**
-     * Views the location of this file as a {@link File}.
-     */
-    Provider<File> getAsFile();
-
-    /**
-     * Sets the location of this file, using a {@link File} instance.
-     */
-    void set(@Nullable File file);
-
+public interface RegularFileProperty extends FileSystemLocationProperty<RegularFile> {
     /**
      * {@inheritDoc}
      */
